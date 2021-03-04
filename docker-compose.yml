@@ -1,0 +1,37 @@
+version: "3"
+
+services:
+  application:
+    build: .
+    image: test-autofact
+    restart: unless-stopped
+    tty: true
+    working_dir: /var/www/app
+    environment: 
+      APP_NAME: Test-Autofact
+      DB_HOST: database
+      DB_DATABASE: testautofactdb
+      DB_USERNAME: root
+      DB_PASSWORD: secretpwd
+    port:
+      - 80:80
+    command: >
+            bash -c "chgrp -R www-data storage bootstrap/cache
+            && chmod -R ug+rwx storage bootstrap/cache
+            && copy .env.example .env
+            && php storage:link
+            && php artisan key:generate
+            && php artisan migrate --seed"
+  
+    database:
+      image: mysql:8.0.23
+      command: --default-authentication-plugin=mysql_native_password
+      restart: unless-stopped
+      environment: 
+        MYSQL_ROOT_PASSWORD: secretpwd
+        MYSQL_DATABASE: testautofactdb
+      volumes: 
+        - dbdata:/var/lib/mysql
+
+volumes: 
+  dbdata:
