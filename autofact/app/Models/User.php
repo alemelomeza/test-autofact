@@ -2,10 +2,12 @@
 
 namespace App\Models;
 
+use Carbon\Carbon;
 use Illuminate\Contracts\Auth\MustVerifyEmail;
 use Illuminate\Database\Eloquent\Factories\HasFactory;
 use Illuminate\Foundation\Auth\User as Authenticatable;
 use Illuminate\Notifications\Notifiable;
+use Illuminate\Support\Facades\DB;
 
 class User extends Authenticatable
 {
@@ -20,6 +22,7 @@ class User extends Authenticatable
         'name',
         'email',
         'password',
+        'role_id',
     ];
 
     /**
@@ -40,4 +43,39 @@ class User extends Authenticatable
     protected $casts = [
         'email_verified_at' => 'datetime',
     ];
+
+    /**
+     * Get the role thas owns the user
+     */
+    public function role()
+    {
+        return $this->belongsTo(Role::class);
+    }
+
+    /**
+     * Get the quizes thas owns the user
+     */
+    public function quizzes()
+    {
+        return $this->hasMany(Quiz::class);
+    }
+
+    /**
+     * Get the quiz thas owns the user for the current month
+     */
+    public function getQuizMonthly()
+    {
+        $quiz = DB::table('quizzes')
+                    ->whereMonth('created_at', Carbon::now()->month)
+                    ->whereUserId($this->id)
+                    ->orderBy('created_at', 'desc')
+                    ->first();
+
+        return $quiz;
+    }
+
+    public function isAdmin()
+    {
+        return $this->role_id == 1;
+    }
 }
